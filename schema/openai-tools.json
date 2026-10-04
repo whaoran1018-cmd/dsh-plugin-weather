@@ -1,0 +1,92 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_weather",
+      "description": "查询全球任意地点的实时天气与环境，并默认附带未来 3 天逐日预报：气温、体感温度、湿度、露点、降水、云量、气压、紫外线指数与等级、风向风速与阵风、日出日落时间，以及空气质量（PM2.5/PM10/O₃/NO₂/SO₂/CO、US AQI、欧洲 AQI）。数据来自 Open-Meteo，免费且无需 API Key，支持中文城市名或 \"纬度,经度\"。当用户问「现在天气 / 冷不冷热不热 / 体感多少度 / 湿度 / 紫外线强不强 / 几点日出日落 / 风大不大 / 空气好不好 / 这几天天气」时调用；只想要实况就把 days 设为 0，想要更长预报用 get_weather_forecast。Real-time global weather: temperature, feels-like, humidity, UV index, sunrise/sunset, wind, air quality — plus a 3-day outlook by default.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "地点：城市名（中/英文，如 上海 / Jakarta / New York）、省州名，或 \"纬度,经度\"（如 31.23,121.47）。省略时使用插件配置的默认地点，再退回公网 IP 定位。"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "直接指定纬度（-90~90，与 longitude 成对使用，优先于 location）。"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "直接指定经度（-180~180，与 latitude 成对使用）。"
+          },
+          "units": {
+            "type": "string",
+            "enum": [
+              "metric",
+              "imperial"
+            ],
+            "description": "单位制，默认 metric（°C / km/h / mm）；imperial = °F / mph / inch。"
+          },
+          "includeAirQuality": {
+            "type": "boolean",
+            "description": "是否包含空气质量（PM2.5、PM10、O₃、NO₂、SO₂、CO、US AQI、欧洲 AQI），默认按插件配置（true）。"
+          },
+          "days": {
+            "type": "integer",
+            "description": "附带未来几天的逐日预报（0–16，含日出日落、紫外线最大值、降水概率与雨量、体感温度区间）。默认 3（今天 + 未来两天）；0 = 只要实况。"
+          }
+        }
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_weather_forecast",
+      "description": "查询全球任意地点未来 1–16 天的逐日天气预报：每日最高/最低气温、体感温度、天气现象、降水概率与雨量、紫外线最大值与等级、风向风速、日出日落；可选逐时数据。用于「这周会不会下雨 / 哪天适合户外 / 出差地天气」这类排期问题；给 date（YYYY-MM-DD）可只看某一天的逐时。Multi-day (1-16) global weather forecast with optional hourly rows for the next 48 h or one chosen date.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "地点：城市名（中/英文，如 上海 / Jakarta / New York）、省州名，或 \"纬度,经度\"（如 31.23,121.47）。省略时使用插件配置的默认地点，再退回公网 IP 定位。"
+          },
+          "latitude": {
+            "type": "number",
+            "description": "直接指定纬度（-90~90，与 longitude 成对使用，优先于 location）。"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "直接指定经度（-180~180，与 latitude 成对使用）。"
+          },
+          "units": {
+            "type": "string",
+            "enum": [
+              "metric",
+              "imperial"
+            ],
+            "description": "单位制，默认 metric（°C / km/h / mm）；imperial = °F / mph / inch。"
+          },
+          "includeAirQuality": {
+            "type": "boolean",
+            "description": "是否包含空气质量（PM2.5、PM10、O₃、NO₂、SO₂、CO、US AQI、欧洲 AQI），默认按插件配置（true）。"
+          },
+          "days": {
+            "type": "integer",
+            "description": "预报天数（1–16），默认 5。"
+          },
+          "includeHourly": {
+            "type": "boolean",
+            "description": "是否附带逐时数据（从当前时刻起最多 48 小时），默认 false。"
+          },
+          "date": {
+            "type": "string",
+            "description": "只看某一天的逐时（当地日期 YYYY-MM-DD，需在预报范围内）。给了 date 就会自动返回该日 24 小时逐时数据，可与 includeHourly 叠加。"
+          }
+        }
+      }
+    }
+  }
+]

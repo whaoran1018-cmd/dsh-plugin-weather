@@ -63,6 +63,32 @@ pnpm add link:C:/path/to/dsh-plugin-weather      # 也可以 file: 或已发布�
 
 目录别放点号目录（DSH 的 watcher 默认忽略 `**/.*`）。
 
+## 在其他 agent 里用（Claude Code / Codex / Cursor / Gemini CLI …）
+
+天气逻辑本身与 agent 无关，只有「注册层」是 DSH 专有。同一个核心提供三种接法，行为不会漂移：
+
+| 接口 | 入口 | 适用 |
+| --- | --- | --- |
+| DSH 插件 | `cordis.patch.yml` + `lib/index.js` | DeepSeek Harness（本插件出身） |
+| **MCP server**（stdio） | `bin/mcp-server.mjs` | Claude Code、Codex CLI、Cursor、Windsurf、Gemini CLI、Cline、Zed、DSH |
+| **一次性 CLI** | `bin/cli.mjs`（命令 `dsh-weather`） | 任何能跑 shell 的 agent（Aider、CI、cron、你自己） |
+| 工具 schema | `bin/schemas.mjs`、`schema/*.json` | OpenAI / Anthropic 函数调用 |
+
+```bash
+git clone https://github.com/whaoran1018-cmd/dsh-plugin-weather.git
+npm i -g github:whaoran1018-cmd/dsh-plugin-weather   # 让 dsh-weather / dsh-weather-mcp 进 PATH
+```
+
+- **Claude Code**：`claude mcp add dsh-weather -- node /绝对路径/bin/mcp-server.mjs`（或项目里放 `.mcp.json`）
+- **Codex CLI**：`~/.codex/config.toml` 加 `[mcp_servers.dsh-weather]` 的 `command` / `args`
+- **Cursor / Windsurf / Cline**：`.cursor/mcp.json` 的 `mcpServers`
+- **Gemini CLI**：`~/.gemini/settings.json` 的 `mcpServers`
+- **只能跑命令的 agent**：`dsh-weather 上海 --days 7 --json`，并在 `AGENTS.md` / `CLAUDE.md` 里写一句
+  「天气问题先跑 `dsh-weather <城市> --json`，别凭记忆答」
+
+各客户端的完整配置片段、环境变量（`WEATHER_DEFAULT_LOCATION` / `WEATHER_LANG` / `WEATHER_UNITS` /
+`WEATHER_PROVIDER` / `WEATHER_TOOL_PREFIX`）见英文 README 的 **Use it with other agents** 一节。
+
 ## 仓库结构
 
 ```

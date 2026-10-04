@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Offline contract test: plugin shape, tool registration, DSH schema subset,
-  # date/day handling and error paths. No network, fast, runs on every push.
+  # Offline suites: DSH plugin contract, MCP handshake/tools-list, CLI flags and
+  # exit codes. No network, fast, runs on every push and PR.
   unit:
     runs-on: ubuntu-latest
     strategy:
@@ -23,11 +23,19 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies
         run: npm install --no-audit --no-fund --ignore-scripts
-      - name: Offline self-test
+      - name: DSH plugin contract (offline)
         run: node test/selftest.mjs --offline
+      - name: MCP server handshake (offline)
+        run: node test/mcp-test.mjs --offline
+      - name: CLI surface (offline)
+        run: node test/cli-test.mjs --offline
+      - name: Checked-in schemas are up to date
+        run: |
+          node tools/export-schemas.mjs
+          git diff --exit-code -- schema/
 
-  # Live test against the real upstream APIs (Open-Meteo). Network-dependent,
-  # so it only runs on schedule/manual dispatch and on main.
+  # Live tests against the real upstream APIs (Open-Meteo), through all three
+  # surfaces. Network-dependent, so it runs on main, schedule and manual dispatch.
   live:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -38,5 +46,9 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund --ignore-scripts
-      - name: Live self-test (Shanghai / Jakarta / coordinates / hourly)
+      - name: DSH tool definitions (live)
         run: node test/selftest.mjs
+      - name: MCP server (live)
+        run: node test/mcp-test.mjs
+      - name: CLI (live)
+        run: node test/cli-test.mjs

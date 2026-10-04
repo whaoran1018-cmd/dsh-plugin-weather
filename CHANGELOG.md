@@ -4,6 +4,28 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-05
+
+### Added
+- **MCP server** (`bin/mcp-server.mjs`, command `dsh-weather-mcp`): dependency-free stdio JSON-RPC 2.0
+  server exposing both tools to any MCP-capable agent — Claude Code, Codex CLI, Cursor, Windsurf,
+  Gemini CLI, Cline, Zed, ChatGPT desktop. Accepts newline-delimited and `Content-Length` framing.
+- **One-shot CLI** (`bin/cli.mjs`, command `dsh-weather`) for agents and scripts that only run commands:
+  `dsh-weather 上海 --days 7`, `--date YYYY-MM-DD`, `--units imperial`, `--json`, `--lat/--lon`, `--help`.
+- **Schema exporter** (`bin/schemas.mjs`, `tools/export-schemas.mjs`) plus checked-in
+  `schema/openai-tools.json` and `schema/anthropic-tools.json`.
+- `lib/harness.js`: load the tool definitions without DSH, so DSH, MCP, CLI and the schema files all read
+  the *same* definitions — no drift between surfaces.
+- Environment config for the non-DSH surfaces: `WEATHER_DEFAULT_LOCATION`, `WEATHER_LANG`, `WEATHER_UNITS`,
+  `WEATHER_PROVIDER`, `WEATHER_TOOL_PREFIX`.
+- Tests: `test/mcp-test.mjs` (real stdio MCP session: initialize → tools/list → tools/call, both framings,
+  error paths) and `test/cli-test.mjs` (flags, exit codes, JSON output, live calls).
+- README section *Use it with other agents* with copy-paste config for Claude Code, Codex, Cursor, Gemini CLI.
+
+### Changed
+- Package description/keywords now cover MCP and the other agents; `bin`, `schema` and extra exports added.
+- `npm run test:all` runs the offline contract, MCP and CLI suites plus the DSH schema validator.
+
 ## [0.2.0] - 2026-10-05
 
 ### Added

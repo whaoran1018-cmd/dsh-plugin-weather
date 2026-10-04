@@ -1,7 +1,7 @@
 {
   "name": "dsh-plugin-weather",
-  "version": "0.2.0",
-  "description": "DeepSeek Harness plugin: global real-time weather, multi-day forecast and air quality — temperature, feels-like, humidity, UV index, sunrise/sunset, wind, PM2.5/AQI. Open-Meteo, no API key.",
+  "version": "0.3.0",
+  "description": "Global weather, multi-day forecast and air quality for DeepSeek Harness, Claude Code, Codex, Cursor and any MCP/shell agent — temperature, feels-like, humidity, UV index, sunrise/sunset, wind, PM2.5/AQI. Open-Meteo, no API key.",
   "license": "MIT",
   "author": "Vaughn <whaoran1018@gmail.com>",
   "repository": {
@@ -18,10 +18,26 @@
     ".": {
       "default": "./lib/index.js"
     },
+    "./mcp": {
+      "default": "./bin/mcp-server.mjs"
+    },
+    "./cli": {
+      "default": "./bin/cli.mjs"
+    },
+    "./harness": {
+      "default": "./lib/harness.js"
+    },
     "./package.json": "./package.json"
+  },
+  "bin": {
+    "dsh-weather": "./bin/cli.mjs",
+    "dsh-weather-mcp": "./bin/mcp-server.mjs",
+    "dsh-weather-schemas": "./bin/schemas.mjs"
   },
   "files": [
     "lib",
+    "bin",
+    "schema",
     "cordis.patch.yml",
     "README.md",
     "README.zh-CN.md",
@@ -35,6 +51,12 @@
     "dsh",
     "dsh-plugin",
     "deepseek-harness",
+    "mcp",
+    "model-context-protocol",
+    "claude-code",
+    "codex",
+    "cursor",
+    "gemini-cli",
     "weather",
     "forecast",
     "air-quality",
@@ -51,7 +73,12 @@
   "scripts": {
     "test": "node test/selftest.mjs --offline",
     "test:live": "node test/selftest.mjs",
+    "test:mcp": "node test/mcp-test.mjs",
+    "test:cli": "node test/cli-test.mjs",
     "test:schema": "node tools/verify-schema-subset.mjs",
+    "test:all": "node test/selftest.mjs --offline && node test/mcp-test.mjs --offline && node test/cli-test.mjs --offline && node tools/verify-schema-subset.mjs",
+    "test:all:live": "node test/selftest.mjs && node test/mcp-test.mjs && node test/cli-test.mjs",
+    "export:schemas": "node tools/export-schemas.mjs",
     "verify": "powershell -File tools/verify.ps1"
   },
   "dsh": {

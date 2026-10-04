@@ -36,6 +36,104 @@ Every daily row carries: date + weekday, weather, min/max temperature, min/max f
 probability and amount, max UV + level, dominant wind, sunrise/sunset. Multi-day answers add a **trend line**
 (temperature range, wettest day, UV peak).
 
+## Use it with other agents (Claude Code, Codex, Cursor, Gemini CLI, …)
+
+The weather logic is agent-agnostic; only the registration layer is DSH-specific. The same core serves
+every runtime, so behaviour cannot drift between them:
+
+| Surface | Entry point | Works with |
+| --- | --- | --- |
+| DSH plugin | `cordis.patch.yml` + `lib/index.js` | DeepSeek Harness (this plugin's origin) |
+| **MCP server** (stdio) | `bin/mcp-server.mjs` | Claude Code, Codex CLI, Cursor, Windsurf, Gemini CLI, Cline, Zed, ChatGPT desktop, DSH — anything that speaks MCP |
+| **One-shot CLI** | `bin/cli.mjs` (`dsh-weather`) | Any agent that can run a shell command (Aider, Codex `exec`, Claude Code's Bash tool, CI, cron, you) |
+| Tool schemas | `bin/schemas.mjs`, `schema/*.json` | OpenAI / Anthropic / any function-calling framework |
+
+Grab the code once:
+
+```bash
+git clone https://github.com/whaoran1018-cmd/dsh-plugin-weather.git
+# or install globally so `dsh-weather` / `dsh-weather-mcp` land on PATH:
+npm i -g github:whaoran1018-cmd/dsh-plugin-weather
+```
+
+### Claude Code
+
+```bash
+claude mcp add dsh-weather -- node /absolute/path/to/dsh-plugin-weather/bin/mcp-server.mjs
+```
+
+or commit a project-scoped `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "dsh-weather": {
+      "command": "node",
+      "args": ["/absolute/path/to/dsh-plugin-weather/bin/mcp-server.mjs"],
+      "env": { "WEATHER_LANG": "zh" }
+    }
+  }
+}
+```
+
+### Codex CLI
+
+`~/.codex/config.toml`:
+
+```toml
+[mcp_servers.dsh-weather]
+command = "node"
+args = ["/absolute/path/to/dsh-plugin-weather/bin/mcp-server.mjs"]
+```
+
+### Cursor / Windsurf / Cline
+
+`.cursor/mcp.json` (or the equivalent settings file):
+
+```json
+{
+  "mcpServers": {
+    "dsh-weather": { "command": "node", "args": ["/absolute/path/to/dsh-plugin-weather/bin/mcp-server.mjs"] }
+  }
+}
+```
+
+### Gemini CLI
+
+`~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "dsh-weather": { "command": "node", "args": ["/absolute/path/to/dsh-plugin-weather/bin/mcp-server.mjs"] }
+  }
+}
+```
+
+### Any agent that can run a command
+
+```bash
+dsh-weather 上海 --days 7
+dsh-weather "New York" --units imperial --json | jq '.current.uvIndex'
+dsh-weather --lat -6.21 --lon 106.85 --date 2026-10-07 --json
+```
+
+Then tell the agent about it (AGENTS.md / CLAUDE.md / system prompt):
+
+> For any weather question, run `dsh-weather <city> --json` (add `--days N` for a multi-day forecast)
+> instead of guessing: it returns current conditions, a 3-day outlook and air quality.
+
+### OpenAI / Anthropic function calling
+
+```bash
+node bin/schemas.mjs openai      # or: anthropic | mcp | dsh
+# ready-made: schema/openai-tools.json, schema/anthropic-tools.json
+```
+
+All surfaces take the same config through the environment: `WEATHER_DEFAULT_LOCATION`, `WEATHER_LANG`,
+`WEATHER_UNITS`, `WEATHER_PROVIDER`, plus `WEATHER_TOOL_PREFIX` to namespace MCP tool names
+(e.g. `WEATHER_TOOL_PREFIX=weather_` → `weather_get_weather`).
+
 ## Install
 
 ### 1. Via the DSH plugin manager (recommended)
@@ -136,18 +234,30 @@ dsh-plugin-weather/
 │   ├── format.js     # human-readable summary
 │   ├── codes.js      # WMO weather codes, compass, UV/AQI categories
 │   ├── http.js       # dependency-free JSON client (timeout/retry/cache)
-│   └── config.js     # schemastery config schema
-├── test/selftest.mjs # 199 checks: offline contract + live data
+│   ├── config.js     # schemastery config schema
+│   └── harness.js    # load the tool definitions without DSH (MCP/CLI re-use)
+├── bin/
+│   ├── mcp-server.mjs # MCP stdio server (Claude Code, Codex, Cursor, Gemini, …)
+│   ├── cli.mjs        # one-shot CLI (`dsh-weather 上海 --days 7 --json`)
+│   └── schemas.mjs    # print tool schemas as openai / anthropic / mcp / dsh
+├── schema/            # generated: openai-tools.json, anthropic-tools.json
+├── test/
+│   ├── selftest.mjs   # 199 checks: DSH contract + live data
+│   ├── mcp-test.mjs   # drives the MCP server over real stdio JSON-RPC
+│   └── cli-test.mjs   # drives the CLI end to end
 └── tools/
     ├── verify.ps1               # local install + verification helper
-    └── verify-schema-subset.mjs # runs DSH's REAL schema validator on our tools
+    ├── verify-schema-subset.mjs # runs DSH's REAL schema validator on our tools
+    └── export-schemas.mjs       # regenerates schema/*.json
 ```
 
 ```powershell
 npm install                 # only dependency: @deepseek-ai/schemastery
 npm test                    # offline contract test (no network)
-npm run test:live           # the same test plus live Open-Meteo calls
-npm run test:schema         # validate tool schemas with DSH's real validator
+npm run test:all            # offline: contract + MCP + CLI + DSH schema validator
+npm run test:live           # contract + MCP + CLI against real Open-Meteo
+npm run test:all:live       # everything above in one go
+npm run export:schemas      # regenerate schema/openai-tools.json + anthropic-tools.json
 ```
 
 ### Three DSH facts worth knowing (learned the hard way)
@@ -156,10 +266,12 @@ npm run test:schema         # validate tool schemas with DSH's real validator
    `additionalProperties`, `items`, `enum`, `const` plus the annotations `description`, `title`, `default`,
    `examples` are accepted, and `oneOf` needs ≥ 2 branches. `minimum` / `pattern` / `minLength` make the whole
    plugin row fail activation with `unsupported JSON schema: …`. `tools/verify-schema-subset.mjs` runs the real
-   validator, so this cannot regress silently.
+   validator, so this cannot regress silently. (MCP clients accept richer schemas — the shared subset simply
+   keeps one definition valid everywhere.)
 2. **Editing a host plugin's code does not hot-reload** in a running desktop profile (verified: a changed
    default stayed unchanged until the process reloaded, while pointing the patch at a new URL took effect
-   immediately — module cache, not code). Reload/restart DSH after editing `lib/`.
+   immediately — module cache, not code). Reload/restart DSH after editing `lib/`. The MCP and CLI surfaces
+   have no such cache: they run the files on disk.
 3. **Do not declare `@deepseek-ai/dsh-*` peer dependencies** unless you pin them to the exact running version.
    DSH's compatibility gate compares those peers with the runtime version and will refuse to install the plugin
    otherwise. This package declares no DSH peers (only `@deepseek-ai/schemastery`, which the gate ignores) and
