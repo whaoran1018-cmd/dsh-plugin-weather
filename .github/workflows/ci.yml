@@ -35,9 +35,12 @@ jobs:
           git diff --exit-code -- schema/
 
   # Live tests against the real upstream APIs (Open-Meteo), through all three
-  # surfaces. Network-dependent, so it runs on main, schedule and manual dispatch.
+  # surfaces. Network-dependent (and third-party rate-limited), so it is advisory:
+  # it always runs on main/schedule/dispatch, but a slow or throttled free API
+  # must not red-X the repository. The blocking gate is the `unit` job above.
   live:
     if: github.event_name != 'pull_request'
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

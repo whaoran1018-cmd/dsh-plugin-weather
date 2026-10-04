@@ -71,7 +71,7 @@ function request(method, params, { framed = false } = {}) {
   const id = nextId++
   const payload = JSON.stringify({ jsonrpc: '2.0', id, method, params })
   const promise = new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`timeout waiting for ${method}`)), 30000)
+    const timer = setTimeout(() => reject(new Error(`timeout waiting for ${method}`)), 60000)
     pending.set(id, (message) => {
       clearTimeout(timer)
       resolve(message)

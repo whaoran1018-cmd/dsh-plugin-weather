@@ -29,8 +29,10 @@ function check(label, condition, detail = '') {
 
 function run(args) {
   return new Promise((resolve) => {
-    execFile(process.execPath, [cli, ...args], { timeout: 60000, maxBuffer: 8 * 1024 * 1024 }, (error, stdout, stderr) => {
-      resolve({ code: error?.code ?? 0, stdout, stderr })
+    // 120 s: a CI runner talking to a rate-limited free API can be far slower
+    // than a laptop; the per-request timeout inside the plugin is still 15 s.
+    execFile(process.execPath, [cli, ...args], { timeout: 120000, maxBuffer: 8 * 1024 * 1024 }, (error, stdout, stderr) => {
+      resolve({ code: error?.code ?? 0, stdout, stderr, timedOut: error?.killed === true })
     })
   })
 }
@@ -86,7 +88,11 @@ if (OFFLINE) {
   } catch {
     /* handled below */
   }
-  check('--date: 回该日 24 小时逐时', day?.hourly?.length === 24, String(day?.hourly?.length))
+  check(
+    '--date: 回该日 24 小时逐时',
+    day?.hourly?.length === 24,
+    dated.timedOut ? '上游超时/限速（120s），非插件问题' : String(day?.hourly?.length),
+  )
 }
 
 console.log(`\n=== 结果：${passed} 通过 / ${failed} 失败 ===`)
