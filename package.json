@@ -30,9 +30,9 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "dsh-weather": "./bin/cli.mjs",
-    "dsh-weather-mcp": "./bin/mcp-server.mjs",
-    "dsh-weather-schemas": "./bin/schemas.mjs"
+    "dsh-weather": "bin/cli.mjs",
+    "dsh-weather-mcp": "bin/mcp-server.mjs",
+    "dsh-weather-schemas": "bin/schemas.mjs"
   },
   "files": [
     "lib",
