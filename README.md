@@ -138,7 +138,7 @@ All surfaces take the same config through the environment: `WEATHER_DEFAULT_LOCA
 
 ### 1. Via the DSH plugin manager (recommended)
 
-Once this repository is public, ask the agent (or use the Plugins page):
+Ask the agent (or use the Plugins page):
 
 ```
 plugin_manager { "action": "install_bundle", "target": "github:whaoran1018-cmd/dsh-plugin-weather" }
