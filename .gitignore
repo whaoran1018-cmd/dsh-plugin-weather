@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# local DSH profile leftovers
+profiles/
+*.bak
+
+# secrets / machine state
+.env
+.env.*
+
+# editors & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# logs & temp output
+*.log
+tmp/

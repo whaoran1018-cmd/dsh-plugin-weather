@@ -1,0 +1,63 @@
+{
+  "name": "dsh-plugin-weather",
+  "version": "0.2.0",
+  "description": "DeepSeek Harness plugin: global real-time weather, multi-day forecast and air quality — temperature, feels-like, humidity, UV index, sunrise/sunset, wind, PM2.5/AQI. Open-Meteo, no API key.",
+  "license": "MIT",
+  "author": "Vaughn <whaoran1018@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/whaoran1018-cmd/dsh-plugin-weather.git"
+  },
+  "homepage": "https://github.com/whaoran1018-cmd/dsh-plugin-weather#readme",
+  "bugs": {
+    "url": "https://github.com/whaoran1018-cmd/dsh-plugin-weather/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "weather",
+    "forecast",
+    "air-quality",
+    "aqi",
+    "uv-index",
+    "sunrise",
+    "sunset",
+    "wind",
+    "open-meteo"
+  ],
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.4"
+  },
+  "scripts": {
+    "test": "node test/selftest.mjs --offline",
+    "test:live": "node test/selftest.mjs",
+    "test:schema": "node tools/verify-schema-subset.mjs",
+    "verify": "powershell -File tools/verify.ps1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "manifestVersion": 1
+  }
+}

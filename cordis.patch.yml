@@ -1,0 +1,20 @@
+# dsh-plugin-weather — bundle patch layer.
+#
+# DSH applies this file when the package is listed in the profile's
+# `dsh.profile.bundles`. It inserts one plugin row plus its default config;
+# that row is what makes the two tools callable by the agent.
+#
+# `name` is the package name on purpose: DSH resolves it from the profile's
+# node_modules, so this file works unchanged for npm installs, git installs
+# and local `link:` checkouts.
+- insert:
+    - id: weather
+      name: 'dsh-plugin-weather'
+      config:
+        defaultLocation: ''
+        language: zh
+        units: metric
+        includeAirQuality: true
+        cacheTtlSeconds: 300
+        requestTimeoutMs: 15000
+        provider: auto

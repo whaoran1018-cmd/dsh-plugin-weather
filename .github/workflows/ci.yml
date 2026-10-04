@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  # Offline contract test: plugin shape, tool registration, DSH schema subset,
+  # date/day handling and error paths. No network, fast, runs on every push.
+  unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund --ignore-scripts
+      - name: Offline self-test
+        run: node test/selftest.mjs --offline
+
+  # Live test against the real upstream APIs (Open-Meteo). Network-dependent,
+  # so it only runs on schedule/manual dispatch and on main.
+  live:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund --ignore-scripts
+      - name: Live self-test (Shanghai / Jakarta / coordinates / hourly)
+        run: node test/selftest.mjs
