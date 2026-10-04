@@ -29,7 +29,12 @@ function check(label, condition, detail = '') {
   }
 }
 
-const server = spawn(process.execPath, [serverPath], { stdio: ['pipe', 'pipe', 'pipe'] })
+const server = spawn(process.execPath, [serverPath], {
+  stdio: ['pipe', 'pipe', 'pipe'],
+  // Language comes from the environment on the MCP surface; zh keeps the
+  // assertions below readable and exercises env-driven config.
+  env: { ...process.env, WEATHER_LANG: 'zh' },
+})
 
 let stderr = ''
 server.stderr.setEncoding('utf8')

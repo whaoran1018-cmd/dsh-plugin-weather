@@ -4,6 +4,31 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-10-05
+
+### Added
+- **Nine summary languages**: 中文 (zh), English (en), Español (es), 日本語 (ja), 한국어 (ko), Português (pt),
+  Italiano (it), Français (fr), Deutsch (de) — weather descriptions, all 16 compass points, UV levels,
+  US/EU AQI categories, weekdays, every label, note and error message.
+- `lib/i18n.js` + `lib/locales/<code>.js` catalogs, with an English fallback for anything missing and
+  alias resolution (`zh-CN`, `pt_BR`, `EN`, …).
+- A per-call `language` argument on both tools, so one request can override the configured language; the MCP
+  surface reads `WEATHER_LANG` and the CLI accepts `--lang`.
+- `test/i18n-test.mjs`: key/order/placeholder parity against `en.js`, value-table completeness, fixture
+  rendering in all nine languages and live rendering — 171 checks.
+- Stable machine keys beside the localized labels: `uvLevel: { key, label }`,
+  `usAqiCategory` / `europeanAqiCategory: { key, label }`, `windDirection: { compass, label }`.
+
+### Fixed
+- **Cross-script place lookup**: Open-Meteo's geocoder only finds names such as "上海" with a CJK language
+  (and "서울" with Korean), so city lookups used to fail under a Latin output language. The lookup now falls
+  back across scripts (requested → en → zh → ja → ko) instead of giving up.
+- Localized summaries no longer leak English labels into daily/hourly rows.
+
+### Changed
+- The default summary language is now `en` (was `zh`); the shipped `cordis.patch.yml` still pins `zh`.
+- Tool descriptions are English-first with Chinese keywords, for mixed-language agent pools.
+
 ## [0.3.0] - 2026-10-05
 
 ### Added

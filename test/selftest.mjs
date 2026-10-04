@@ -43,7 +43,7 @@ check('导出 Config（schemastery schema）', typeof Config === 'function' || t
 const configDefaults = typeof Config === 'function' ? Config({}) : {}
 check(
   'Config 默认值可用',
-  configDefaults.language === 'zh' &&
+  configDefaults.language === 'en' &&
     configDefaults.units === 'metric' &&
     configDefaults.includeAirQuality === true &&
     configDefaults.requestTimeoutMs >= 1000,
@@ -53,7 +53,7 @@ check('apply 是函数', typeof apply === 'function')
 
 const registered = []
 const mockCtx = { tools: { register: (definition) => (registered.push(definition), () => {}) } }
-apply(mockCtx, resolveConfig({}))
+apply(mockCtx, resolveConfig({ language: 'zh' }))
 
 const byName = Object.fromEntries(registered.map((tool) => [tool.name, tool]))
 check('注册 2 个工具', registered.length === 2, registered.map((t) => t.name).join(','))
@@ -219,7 +219,9 @@ function assertCurrent(label, result) {
   for (const field of AIR_FIELDS) {
     check(`${label}: airQuality.${field}`, isNumber(result?.airQuality?.[field]), String(result?.airQuality?.[field]))
   }
-  check(`${label}: AQI 分级`, typeof result?.airQuality?.usAqiCategory?.zh === 'string')
+  check(`${label}: AQI 分级`, typeof result?.airQuality?.usAqiCategory?.label === 'string' && typeof result?.airQuality?.usAqiCategory?.key === 'string')
+  check(`${label}: 风向含稳定缩写 + 本地化名`, typeof result?.current?.windDirection?.compass === 'string' && typeof result?.current?.windDirection?.label === 'string')
+  check(`${label}: 紫外线等级含 key + label`, typeof result?.current?.uvLevel?.key === 'string' && typeof result?.current?.uvLevel?.label === 'string')
   check(`${label}: JSON 可序列化`, (() => { try { JSON.parse(JSON.stringify(result)); return true } catch { return false } })())
 }
 
@@ -288,6 +290,16 @@ try {
     (oneDay?.hourly ?? []).every((row) => String(row.time).startsWith(targetDay)),
   )
   check('指定日期: 摘要标注该日', String(oneDay?.summary ?? '').includes(`逐时 · ${targetDay}`), String(oneDay?.summary ?? '').slice(0, 120))
+
+  console.log('\n-- B8. 语言（per-call 覆盖） --')
+  const japanese = await getWeather.execute({ location: '上海', days: 1, language: 'ja' }, exec)
+  check('per-call language=ja: ok', japanese?.ok === true, JSON.stringify(japanese?.message ?? ''))
+  check('per-call language=ja: 摘要用日语标签', String(japanese?.summary ?? '').includes('気温'), String(japanese?.summary ?? '').slice(0, 60))
+  check('per-call language=ja: query.language 回显', japanese?.query?.language === 'ja', String(japanese?.query?.language))
+  check('per-call language=ja: 天气现象已本地化', japanese?.current?.weather !== oneDay?.current?.weather, String(japanese?.current?.weather))
+  const german = await getForecast.execute({ location: '上海', days: 2, language: 'de' }, exec)
+  check('per-call language=de: 摘要用德语标签', String(german?.summary ?? '').includes('Luftfeuchte'), String(german?.summary ?? '').slice(0, 60))
+  check('per-call language=de: 逐日 2 天', german?.daily?.length === 2, String(german?.daily?.length))
 
   const far = new Date(`${base?.daily?.[0]?.date}T00:00:00Z`)
   far.setUTCDate(far.getUTCDate() + 9)

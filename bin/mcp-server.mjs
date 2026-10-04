@@ -18,10 +18,15 @@
  *   WEATHER_DEFAULT_LOCATION, WEATHER_LANG, WEATHER_UNITS, WEATHER_PROVIDER
  *   WEATHER_TOOL_PREFIX   optional prefix, e.g. "weather_" (default: none)
  */
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { LANGUAGES } from '../lib/i18n.js'
 import { loadTools, resultBlocks } from '../lib/harness.js'
 
 const PREFIX = process.env.WEATHER_TOOL_PREFIX ?? ''
 const PROTOCOL_FALLBACK = '2025-06-18'
+const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'))
 
 const definitions = loadTools()
 const byName = new Map(definitions.map((definition) => [PREFIX + definition.name, definition]))
@@ -78,10 +83,11 @@ async function handle(message) {
       reply(id, {
         protocolVersion: typeof requested === 'string' && requested ? requested : PROTOCOL_FALLBACK,
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: 'dsh-plugin-weather', version: '0.3.0' },
+        serverInfo: { name: 'dsh-plugin-weather', version: pkg.version },
         instructions:
           'Global weather and air quality. Use get_weather for current conditions (3-day outlook by ' +
-          'default) and get_weather_forecast for 1-16 day forecasts; pass date="YYYY-MM-DD" for one day’s hourly rows.',
+          'default) and get_weather_forecast for 1-16 day forecasts; pass date="YYYY-MM-DD" for one day’s hourly rows. ' +
+          `The summary language follows WEATHER_LANG (${LANGUAGES.join(', ')}; default en) or the per-call "language" argument.`,
       })
       return
     }

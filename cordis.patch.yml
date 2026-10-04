@@ -12,6 +12,8 @@
       name: 'dsh-plugin-weather'
       config:
         defaultLocation: ''
+        # Summary language — one of: zh, en, es, ja, ko, pt, it, fr, de.
+        # Delete this line to use the built-in default (en).
         language: zh
         units: metric
         includeAirQuality: true

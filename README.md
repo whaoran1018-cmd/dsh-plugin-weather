@@ -203,18 +203,43 @@ Set from the plugin settings UI, or in the profile's `cordis.patch.yml` under th
 | Key | Default | Meaning |
 | --- | --- | --- |
 | `defaultLocation` | `""` | Used when no location is given. Empty = public-IP lookup. |
-| `language` | `zh` | Summary language: `zh` or `en`. |
+| `language` | `en` | Summary language — see [Languages](#languages). |
 | `units` | `metric` | `metric` or `imperial`. |
 | `includeAirQuality` | `true` | Attach the air-quality block. |
 | `cacheTtlSeconds` | `300` | Local cache for identical requests; `0` disables. |
 | `requestTimeoutMs` | `15000` | Per-request upstream timeout. |
 | `provider` | `auto` | `auto` falls back to wttr.in if Open-Meteo fails; `open-meteo` never falls back. |
 
+## Languages
+
+Summaries are localized — weather descriptions, all 16 compass points, UV levels, US/EU AQI categories,
+weekdays, every label, note and error message.
+
+| Code | Language | Code | Language | Code | Language |
+| --- | --- | --- | --- | --- | --- |
+| `zh` | 中文 | `ko` | 한국어 | `it` | Italiano |
+| `en` | English (default) | `pt` | Português | `fr` | Français |
+| `es` | Español | `ja` | 日本語 | `de` | Deutsch |
+
+Pick one wherever it suits you:
+
+- **DSH plugin config**: `language: ja` in the `config` block of the plugin row (or the settings UI).
+- **Per call**: both tools accept `language` — `get_weather { location: "上海", language: "de" }`.
+- **MCP**: `WEATHER_LANG=es` in the server's `env`.
+- **CLI**: `dsh-weather 上海 --lang ko`.
+
+Aliases work too (`zh-CN`, `pt_BR`, `ES`, …); anything unrecognized falls back to English.
+Machine-readable fields never change with the language: JSON keys stay English, and localized values
+always come with a stable key — `uvLevel: { key: "low", label: "低" }`,
+`usAqiCategory: { key: "moderate", label: "中等" }`, `windDirection: { compass: "NNW", label: "西北偏北" }`.
+
 ## How it resolves things
 
 - **Location**: explicit coordinates → `location` (city via Open-Meteo geocoding; `"lat,lon"` parsed directly) →
   configured `defaultLocation` → public IP (`ipwho.is` → `freeipapi.com` → `ip-api.com`).
   When the result came from IP, the answer says so — IP geolocation is city-level and can be skewed by VPN/proxy.
+  City lookup is script-aware: Open-Meteo only finds "上海" with a CJK language and "서울" with Korean, so the
+  plugin falls back across scripts (requested → en → zh → ja → ko) instead of returning "not found".
 - **Weather**: Open-Meteo forecast API, with wttr.in as a fallback source (fewer fields, no air quality).
 - **Air quality**: Open-Meteo Air Quality (CAMS).
 - All HTTP goes through Node's built-in `node:https` with a timeout, one retry and a small TTL cache — no
@@ -231,8 +256,10 @@ dsh-plugin-weather/
 │   ├── geo.js        # coordinates, geocoding, IP fallback
 │   ├── openmeteo.js  # forecast + air-quality providers, normalization
 │   ├── wttr.js       # fallback provider
-│   ├── format.js     # human-readable summary
-│   ├── codes.js      # WMO weather codes, compass, UV/AQI categories
+│   ├── format.js     # human-readable summary (locale templates)
+│   ├── codes.js      # WMO weather codes, compass, UV/AQI levels (semantic layer)
+│   ├── i18n.js       # locale registry, t(), alias resolution, English fallback
+│   ├── locales/      # one catalog per language: en (reference) + 8 more
 │   ├── http.js       # dependency-free JSON client (timeout/retry/cache)
 │   ├── config.js     # schemastery config schema
 │   └── harness.js    # load the tool definitions without DSH (MCP/CLI re-use)
@@ -242,9 +269,10 @@ dsh-plugin-weather/
 │   └── schemas.mjs    # print tool schemas as openai / anthropic / mcp / dsh
 ├── schema/            # generated: openai-tools.json, anthropic-tools.json
 ├── test/
-│   ├── selftest.mjs   # 199 checks: DSH contract + live data
+│   ├── selftest.mjs   # 213 checks: DSH contract + live data
 │   ├── mcp-test.mjs   # drives the MCP server over real stdio JSON-RPC
-│   └── cli-test.mjs   # drives the CLI end to end
+│   ├── cli-test.mjs   # drives the CLI end to end
+│   └── i18n-test.mjs  # locale parity (+ 9-language rendering), 171 checks
 └── tools/
     ├── verify.ps1               # local install + verification helper
     ├── verify-schema-subset.mjs # runs DSH's REAL schema validator on our tools
@@ -254,11 +282,15 @@ dsh-plugin-weather/
 ```powershell
 npm install                 # only dependency: @deepseek-ai/schemastery
 npm test                    # offline contract test (no network)
-npm run test:all            # offline: contract + MCP + CLI + DSH schema validator
-npm run test:live           # contract + MCP + CLI against real Open-Meteo
+npm run test:all            # offline: contract + MCP + CLI + locales + DSH schema validator
+npm run test:live           # contract + MCP + CLI + locales against real Open-Meteo
 npm run test:all:live       # everything above in one go
 npm run export:schemas      # regenerate schema/openai-tools.json + anthropic-tools.json
 ```
+
+Adding a language: copy `lib/locales/en.js`, translate the values (keep the keys, order and `{placeholders}`),
+add an import + the code to `LANGUAGES` in `lib/i18n.js` — `test/i18n-test.mjs` then verifies parity,
+value-table completeness and rendering for you.
 
 ### Three DSH facts worth knowing (learned the hard way)
 

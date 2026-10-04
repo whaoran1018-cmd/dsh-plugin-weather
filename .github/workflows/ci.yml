@@ -10,7 +10,8 @@ on:
 
 jobs:
   # Offline suites: DSH plugin contract, MCP handshake/tools-list, CLI flags and
-  # exit codes. No network, fast, runs on every push and PR.
+  # exit codes, locale parity across the nine languages. No network, fast, runs
+  # on every push and PR.
   unit:
     runs-on: ubuntu-latest
     strategy:
@@ -29,6 +30,8 @@ jobs:
         run: node test/mcp-test.mjs --offline
       - name: CLI surface (offline)
         run: node test/cli-test.mjs --offline
+      - name: Locale parity and rendering (offline)
+        run: node test/i18n-test.mjs --offline
       - name: Checked-in schemas are up to date
         run: |
           node tools/export-schemas.mjs
@@ -55,3 +58,5 @@ jobs:
         run: node test/mcp-test.mjs
       - name: CLI (live)
         run: node test/cli-test.mjs
+      - name: Locales (live: zh/ja/es, override, fallback)
+        run: node test/i18n-test.mjs

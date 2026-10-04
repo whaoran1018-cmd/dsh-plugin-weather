@@ -1,7 +1,7 @@
 {
   "name": "dsh-plugin-weather",
-  "version": "0.3.0",
-  "description": "Global weather, multi-day forecast and air quality for DeepSeek Harness, Claude Code, Codex, Cursor and any MCP/shell agent — temperature, feels-like, humidity, UV index, sunrise/sunset, wind, PM2.5/AQI. Open-Meteo, no API key.",
+  "version": "0.4.0",
+  "description": "Global weather, multi-day forecast and air quality for DeepSeek Harness, Claude Code, Codex, Cursor and any MCP/shell agent — temperature, feels-like, humidity, UV index, sunrise/sunset, wind, PM2.5/AQI, in 9 languages. Open-Meteo, no API key.",
   "license": "MIT",
   "author": "Vaughn <whaoran1018@gmail.com>",
   "repository": {
@@ -65,7 +65,12 @@
     "sunrise",
     "sunset",
     "wind",
-    "open-meteo"
+    "open-meteo",
+    "i18n",
+    "multilingual",
+    "中文",
+    "日本語",
+    "한국어"
   ],
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.4"
@@ -75,9 +80,10 @@
     "test:live": "node test/selftest.mjs",
     "test:mcp": "node test/mcp-test.mjs",
     "test:cli": "node test/cli-test.mjs",
+    "test:i18n": "node test/i18n-test.mjs",
     "test:schema": "node tools/verify-schema-subset.mjs",
-    "test:all": "node test/selftest.mjs --offline && node test/mcp-test.mjs --offline && node test/cli-test.mjs --offline && node tools/verify-schema-subset.mjs",
-    "test:all:live": "node test/selftest.mjs && node test/mcp-test.mjs && node test/cli-test.mjs",
+    "test:all": "node test/selftest.mjs --offline && node test/mcp-test.mjs --offline && node test/cli-test.mjs --offline && node test/i18n-test.mjs --offline && node tools/verify-schema-subset.mjs",
+    "test:all:live": "node test/selftest.mjs && node test/mcp-test.mjs && node test/cli-test.mjs && node test/i18n-test.mjs",
     "export:schemas": "node tools/export-schemas.mjs",
     "verify": "powershell -File tools/verify.ps1"
   },

@@ -69,8 +69,11 @@ if (OFFLINE) {
   check('坐标 + --json: 含空气质量', typeof parsed?.airQuality?.usAqi === 'number')
   check('坐标 + --json: 2 天逐日', parsed?.daily?.length === 2, String(parsed?.daily?.length))
 
-  const text = await run(['上海', '--days', '1'])
-  check('默认输出人类可读摘要', /温度/.test(text.stdout) && /日出/.test(text.stdout))
+  const text = await run(['上海', '--days', '1', '--lang', 'zh'])
+  check('默认输出人类可读摘要（--lang zh）', /温度/.test(text.stdout) && /日出/.test(text.stdout))
+
+  const german = await run(['Shanghai', '--days', '1', '--lang', 'de'])
+  check('--lang de: 摘要用德语标签', /Luftfeuchte/.test(german.stdout), german.stdout.split('\n').slice(0, 6).join(' | '))
 
   const imperial = await run(['Shanghai', '--units', 'imperial', '--days', '1', '--json'])
   let imp = null

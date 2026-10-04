@@ -22,6 +22,7 @@
  *   --default PLACE     default location used when none is given
  *   --version, --help
  */
+import { LANGUAGES } from '../lib/i18n.js'
 import { loadTools, resultText } from '../lib/harness.js'
 
 const TOOL_FOR_DATE = 'get_weather_forecast'
@@ -36,7 +37,7 @@ function usage() {
     '  --date YYYY-MM-DD   hourly rows for one local day',
     '  --hourly            hourly rows for the next 48 h',
     '  --units metric|imperial',
-    '  --lang zh|en',
+    '  --lang CODE         summary language: ' + LANGUAGES.join(', '),
     '  --no-air            skip air quality',
     '  --json              print raw JSON',
     '  --default PLACE     fallback location',

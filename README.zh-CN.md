@@ -132,12 +132,33 @@ npm i -g github:whaoran1018-cmd/dsh-plugin-weather   # 让 dsh-weather / dsh-wea
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
 | `defaultLocation` | `""` | 未指定地点时用；空 = 公网 IP 定位 |
-| `language` | `zh` | 摘要语言（zh / en） |
+| `language` | `en` | 摘要语言，见下方「多语言」 |
 | `units` | `metric` | `metric`=°C/km/h/mm，`imperial`=°F/mph/inch |
 | `includeAirQuality` | `true` | 是否附带空气质量 |
 | `cacheTtlSeconds` | `300` | 相同请求的本地缓存秒数，0 = 关闭 |
 | `requestTimeoutMs` | `15000` | 单次上游超时 |
 | `provider` | `auto` | `auto`=失败回退 wttr.in；`open-meteo`=只用 Open-Meteo |
+
+## 多语言（9 种）
+
+摘要全面本地化：天气现象、16 方位、紫外线等级、US/EU AQI 分级、星期、所有标签/提示/报错文本。
+
+| 代码 | 语言 | 代码 | 语言 | 代码 | 语言 |
+| --- | --- | --- | --- | --- | --- |
+| `zh` | 中文 | `ko` | 한국어 | `it` | Italiano |
+| `en` | English（默认） | `pt` | Português | `fr` | Français |
+| `es` | Español | `ja` | 日本語 | `de` | Deutsch |
+
+四种改法，任选：
+
+- **DSH 配置**：插件行 `config` 里写 `language: zh`（本仓库自带的 `cordis.patch.yml` 就是 zh）
+- **单次调用**：两个工具都支持 `language` 参数，如 `get_weather { location:'上海', language:'ja' }`
+- **MCP**：服务端 `env` 里设 `WEATHER_LANG=es`
+- **CLI**：`dsh-weather 上海 --lang ko`
+
+别名也可（`zh-CN`、`pt_BR`、`ES`…），无法识别时回退英文。**机器可读字段不随语言变化**：JSON 键恒为英文，
+本地化取值旁边永远配一个稳定 key——`uvLevel: { key:'low', label:'低' }`、
+`usAqiCategory: { key:'moderate', label:'中等' }`、`windDirection: { compass:'NNW', label:'西北偏北' }`。
 
 ## 用法示例
 
