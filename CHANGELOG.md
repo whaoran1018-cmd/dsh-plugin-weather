@@ -4,6 +4,20 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-10-05
+
+### Fixed
+- Daily forecast rows reported their UV level in **English** whatever the configured language: the Open-Meteo
+  daily mapping called `uvLevel(value)` without the language, so `daily[].uvLevel.label` leaked "Very high"
+  into an otherwise Chinese/Japanese/… summary. Only the daily rows were affected — current conditions, air
+  quality and wind labels were already localized.
+
+### Added
+- `test/i18n-test.mjs` enforces a locale **invariant** on live results: every `{key,label}` value the providers
+  emit (current + daily UV, wind direction, both AQI categories) is compared against the locale table for the
+  requested language, so a forgotten `language` argument fails the tests instead of silently leaking English.
+  177 checks live.
+
 ## [0.4.0] - 2026-10-05
 
 ### Added

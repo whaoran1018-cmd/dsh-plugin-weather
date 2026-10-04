@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-weather",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Global weather, multi-day forecast and air quality for DeepSeek Harness, Claude Code, Codex, Cursor and any MCP/shell agent — temperature, feels-like, humidity, UV index, sunrise/sunset, wind, PM2.5/AQI, in 9 languages. Open-Meteo, no API key.",
   "license": "MIT",
   "author": "Vaughn <whaoran1018@gmail.com>",

@@ -8,7 +8,7 @@
 import en from '../lib/locales/en.js'
 import { LANGUAGES, supportedLanguages, resolveLanguage, t, wmoText, uvName, aqiName, compassName, windPhrase, weekdayName } from '../lib/i18n.js'
 import { renderWeatherText } from '../lib/format.js'
-import { uvLevel, aqiCategory, windDirectionLabel, weatherText, weatherEmoji } from '../lib/codes.js'
+import { uvLevel, aqiCategory, windCompass, windDirectionLabel, weatherText, weatherEmoji } from '../lib/codes.js'
 import { runWeatherQuery } from '../lib/service.js'
 import { resolveConfig } from '../lib/config.js'
 
@@ -167,13 +167,37 @@ if (OFFLINE) {
   console.log('\n=== E. 联网多语言渲染 === 已跳过（--offline）')
 } else {
   console.log('\n=== E. 联网多语言渲染 ===')
+
+  /**
+   * Invariant guard: every localized value the providers emit must match the
+   * requested language. A call site that forgets to pass `language` shows up
+   * here instead of silently leaking English into e.g. a Chinese daily row.
+   */
+  function languageLeaks(result, code) {
+    const leaks = []
+    const current = result?.current ?? {}
+    if (current.uvLevel && current.uvLevel.label !== uvLevel(current.uvIndex, code)?.label) leaks.push('current.uvLevel')
+    if (current.windDirection && current.windDirection.label !== windCompass(current.windDirectionDegrees, code)?.label) leaks.push('current.windDirection')
+    for (const [index, day] of (result?.daily ?? []).entries()) {
+      if (day.uvLevel && day.uvLevel.label !== uvLevel(day.uvIndexMax, code)?.label) leaks.push(`daily[${index}].uvLevel`)
+      const degrees = day.windDirectionDominant?.degrees
+      if (degrees !== null && degrees !== undefined && day.windDirectionLabel !== windDirectionLabel(degrees, code)) leaks.push(`daily[${index}].windDirectionLabel`)
+    }
+    const air = result?.airQuality
+    if (air?.usAqiCategory && air.usAqiCategory.label !== aqiCategory(air.usAqi, 'us', code)?.label) leaks.push('airQuality.usAqiCategory')
+    if (air?.europeanAqiCategory && air.europeanAqiCategory.label !== aqiCategory(air.europeanAqi, 'eu', code)?.label) leaks.push('airQuality.europeanAqiCategory')
+    return leaks
+  }
+
   const cfg = resolveConfig({})
   for (const code of ['zh', 'ja', 'es']) {
-    const result = await runWeatherQuery({ location: 'Shanghai', days: 1, language: code }, cfg, {})
+    const result = await runWeatherQuery({ location: 'Shanghai', days: 2, language: code }, cfg, {})
     check(`${code}: 实况调用 ok`, result?.ok === true, JSON.stringify(result?.message ?? ''))
     check(`${code}: summary 用该语言`, typeof result?.summary === 'string' && result.summary.includes(t(code, 'label.temp')), String(result?.summary ?? '').slice(0, 60))
     check(`${code}: query.language 回显`, result?.query?.language === code, String(result?.query?.language))
     check(`${code}: 空气质量等级已本地化`, result?.airQuality?.usAqiCategory?.label === aqiCategory(result?.airQuality?.usAqi, 'us', code)?.label)
+    check(`${code}: 所有本地化标签都跟随语言`, languageLeaks(result, code).length === 0, languageLeaks(result, code).join(', '))
+    check(`${code}: 逐日行含本地化紫外线等级`, (result?.daily ?? []).every((day) => day.uvLevel?.label === uvLevel(day.uvIndexMax, code)?.label))
   }
   const override = await runWeatherQuery({ location: 'Shanghai', days: 1, language: 'de' }, resolveConfig({ language: 'zh' }), {})
   check('per-call language 覆盖 config', override?.summary?.includes(t('de', 'label.temp')), String(override?.summary ?? '').slice(0, 60))
