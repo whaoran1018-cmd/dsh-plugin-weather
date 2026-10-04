@@ -58,5 +58,5 @@ jobs:
         run: node test/mcp-test.mjs
       - name: CLI (live)
         run: node test/cli-test.mjs
-      - name: Locales (live: zh/ja/es, override, fallback)
+      - name: Locales live (zh/ja/es, override, fallback)
         run: node test/i18n-test.mjs
